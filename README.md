@@ -104,3 +104,68 @@ executing.
 ```ts
 @Select(actionsExecuting([Action1, Action2])) multipleActions$: Observable<ActionsExecuting>;
 ```
+
+## Tracking Success and Error States of Actions
+
+You can also track whether actions have succeeded or failed (errored) using the `actionsSucceeded` and `actionsErrored`
+selectors. This is useful for showing success/error messages or analytics.
+
+**Usage in a component:**
+
+```ts
+import { actionsSucceeded, actionsErrored } from '@ngxs-labs/actions-executing';
+
+@Select(actionsSucceeded([MyAction])) myActionSuccess$: Observable<{ [action: string]: number }>;
+@Select(actionsErrored([MyAction])) myActionError$: Observable<{ [action: string]: number }>;
+```
+
+**Example UI integration:**
+
+```html
+<!-- Show a success message if the action succeeded at least once -->
+<div *ngIf="(myActionSuccess$ | async)?.[MyAction.type]">
+    Action succeeded!
+</div>
+
+<!-- Show an error message if the action failed at least once -->
+<div *ngIf="(myActionError$ | async)?.[MyAction.type]">
+    Action failed!
+</div>
+```
+
+You can also pass multiple actions to the selectors to track multiple actions at once.
+
+```ts
+@Select(actionsSucceeded([Action1, Action2])) successCounts$: Observable<{ [action: string]: number }>;
+@Select(actionsErrored([Action1, Action2])) errorCounts$: Observable<{ [action: string]: number }>;
+```
+
+## Tracking the Last Result of Actions (Success or Error)
+
+You can use the `actionsResult` selector to know if an action was triggered and whether it last succeeded or errored.
+This combines success and error tracking in a single observable.
+
+**Usage in a component:**
+
+```ts
+import { actionsResult } from '@ngxs-labs/actions-executing';
+
+@Select(actionsResult([MyAction])) myActionResult$: Observable<{ [action: string]: 'success' | 'error' | null }>;
+```
+
+**Example UI integration:**
+
+```html
+<div *ngIf="(myActionResult$ | async)?.[MyAction.type] === 'success'">
+    Action succeeded!
+</div>
+<div *ngIf="(myActionResult$ | async)?.[MyAction.type] === 'error'">
+    Action failed!
+</div>
+```
+
+You can also pass multiple actions to the selector to track the last result for each:
+
+```ts
+@Select(actionsResult([Action1, Action2])) results$: Observable<{ [action: string]: 'success' | 'error' | null }>;
+```
