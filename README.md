@@ -140,32 +140,46 @@ You can also pass multiple actions to the selectors to track multiple actions at
 @Select(actionsErrored([Action1, Action2])) errorCounts$: Observable<{ [action: string]: number }>;
 ```
 
-## Tracking the Last Result of Actions (Success or Error)
+## Tracking the Last Result of Actions (Full Lifecycle)
 
-You can use the `actionsResult` selector to know if an action was triggered and whether it last succeeded or errored.
-This combines success and error tracking in a single observable.
+You can use the `actionsResult` selector to know the last status of an action: whether it was dispatched, succeeded,
+errored, canceled, or not triggered yet. This gives you full insight into the action lifecycle.
+
+**Possible values:**
+
+-   `'dispatched'`: The action was dispatched and is currently executing.
+-   `'success'`: The action completed successfully.
+-   `'error'`: The action failed with an error.
+-   `'canceled'`: The action was canceled (e.g., by NGXS cancelUncompleted).
+-   `null`: The action has not been triggered yet.
 
 **Usage in a component:**
 
 ```ts
 import { actionsResult } from '@ngxs-labs/actions-executing';
 
-@Select(actionsResult([MyAction])) myActionResult$: Observable<{ [action: string]: 'success' | 'error' | null }>;
+@Select(actionsResult([MyAction])) myActionResult$: Observable<{ [action: string]: 'dispatched' | 'success' | 'error' | 'canceled' | null }>;
 ```
 
 **Example UI integration:**
 
 ```html
+<div *ngIf="(myActionResult$ | async)?.[MyAction.type] === 'dispatched'">
+    Action is running...
+</div>
 <div *ngIf="(myActionResult$ | async)?.[MyAction.type] === 'success'">
     Action succeeded!
 </div>
 <div *ngIf="(myActionResult$ | async)?.[MyAction.type] === 'error'">
     Action failed!
 </div>
+<div *ngIf="(myActionResult$ | async)?.[MyAction.type] === 'canceled'">
+    Action was canceled.
+</div>
 ```
 
 You can also pass multiple actions to the selector to track the last result for each:
 
 ```ts
-@Select(actionsResult([Action1, Action2])) results$: Observable<{ [action: string]: 'success' | 'error' | null }>;
+@Select(actionsResult([Action1, Action2])) results$: Observable<{ [action: string]: 'dispatched' | 'success' | 'error' | 'canceled' | null }>;
 ```

@@ -4,7 +4,7 @@ import { tap } from 'rxjs/operators';
 import { ActionStatus } from '@ngxs/store/src/actions-stream';
 import { OnDestroy, Injectable } from '@angular/core';
 
-export type ActionResult = 'success' | 'error' | null;
+export type ActionResult = 'success' | 'error' | 'dispatched' | 'canceled' | null;
 export interface ActionsExecutedResultStateModel {
     [action: string]: ActionResult;
 }
@@ -26,10 +26,14 @@ export class ActionsExecutedResultState implements NgxsOnInit, OnDestroy {
                     const actionType = getActionTypeFromInstance(actionContext.action);
                     if (!actionType) return;
 
-                    if (actionContext.status === ActionStatus.Successful) {
+                    if (actionContext.status === ActionStatus.Dispatched) {
+                        patchState({ [actionType]: 'dispatched' });
+                    } else if (actionContext.status === ActionStatus.Successful) {
                         patchState({ [actionType]: 'success' });
                     } else if (actionContext.status === ActionStatus.Errored) {
                         patchState({ [actionType]: 'error' });
+                    } else if (actionContext.status === ActionStatus.Canceled) {
+                        patchState({ [actionType]: 'canceled' });
                     }
                 })
             )

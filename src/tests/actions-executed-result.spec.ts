@@ -71,7 +71,7 @@ describe('actionsExecutedResult', () => {
     it('should show success for a successful async action', fakeAsync(() => {
         store.dispatch(new AsyncAction1());
         let snapshot = store.selectSnapshot(actionsResult([AsyncAction1]));
-        expect(snapshot).toEqual({ [AsyncAction1.type]: null }); // not completed yet
+        expect(snapshot).toEqual({ [AsyncAction1.type]: 'dispatched' });
         tick();
         snapshot = store.selectSnapshot(actionsResult([AsyncAction1]));
         expect(snapshot).toEqual({ [AsyncAction1.type]: 'success' });
@@ -95,5 +95,40 @@ describe('actionsExecutedResult', () => {
         tick();
         snapshot = store.selectSnapshot(actionsResult([AsyncErrorAction1]));
         expect(snapshot).toEqual({ [AsyncErrorAction1.type]: 'error' });
+    }));
+
+    it('should show dispatched for a running async action', fakeAsync(() => {
+        store.dispatch(new AsyncAction1());
+        let snapshot = store.selectSnapshot(actionsResult([AsyncAction1]));
+        expect(snapshot).toEqual({ [AsyncAction1.type]: 'dispatched' });
+        tick();
+        snapshot = store.selectSnapshot(actionsResult([AsyncAction1]));
+        expect(snapshot).toEqual({ [AsyncAction1.type]: 'success' });
+    }));
+
+    it('should show canceled for a canceled async action', fakeAsync(() => {
+        class CancelAction {
+            static type = 'CANCEL ACTION';
+        }
+        @State({ name: 'cancel_test', defaults: {} })
+        @Injectable()
+        class CancelTestState {
+            @Action(CancelAction, { cancelUncompleted: true })
+            cancelAction() {
+                return of({}).pipe(delay(10));
+            }
+        }
+        TestBed.resetTestingModule();
+        TestBed.configureTestingModule({
+            imports: [NgxsModule.forRoot([CancelTestState]), NgxsActionsExecutingModule.forRoot()]
+        });
+        const cancelStore = TestBed.inject(Store);
+        cancelStore.dispatch(new CancelAction());
+        cancelStore.dispatch(new CancelAction()); // This should cancel the first
+        let snapshot = cancelStore.selectSnapshot(actionsResult([CancelAction]));
+        expect(snapshot).toEqual({ [CancelAction.type]: 'canceled' });
+        tick(10);
+        snapshot = cancelStore.selectSnapshot(actionsResult([CancelAction]));
+        expect(snapshot).toEqual({ [CancelAction.type]: 'success' });
     }));
 });
