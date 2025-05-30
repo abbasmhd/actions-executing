@@ -1,14 +1,29 @@
-import { State, NgxsOnInit, StateContext, Actions, getActionTypeFromInstance } from '@ngxs/store';
+import { State, NgxsOnInit, StateContext, Actions, getActionTypeFromInstance, ActionStatus } from '@ngxs/store';
 import { Subscription } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { ActionStatus } from '@ngxs/store/src/actions-stream';
 import { OnDestroy, Injectable } from '@angular/core';
 
+/**
+ * Represents the last known status of an action.
+ * - 'dispatched': The action is currently running
+ * - 'success': The action completed successfully
+ * - 'error': The action failed
+ * - 'canceled': The action was canceled
+ * - null: The action has not been triggered yet
+ */
 export type ActionResult = 'success' | 'error' | 'dispatched' | 'canceled' | null;
+
+/**
+ * State model mapping action type to its last result (status).
+ */
 export interface ActionsExecutedResultStateModel {
     [action: string]: ActionResult;
 }
 
+/**
+ * NGXS state that tracks the last result (status) of each action.
+ * Updates on every action status change (dispatched, success, error, canceled).
+ */
 @State<ActionsExecutedResultStateModel>({
     name: 'ngxs_actions_executed_result',
     defaults: {}
